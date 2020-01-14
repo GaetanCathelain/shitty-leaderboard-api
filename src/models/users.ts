@@ -1,10 +1,11 @@
 import { RedisClient } from "redis";
 import { stringify } from "querystring";
 import { uuidv4 } from "uuid/v4";
+import { Identifiable } from "./identifiable";
 
 const { ApolloServer, gql } = require("apollo-server");
 
-interface User {
+interface User extends Identifiable {
   id: string;
   username: string;
   upvote: number;
@@ -47,6 +48,10 @@ export class UserModel {
     }
   };
 
+  userExists(){
+    
+  }
+
   addUser(username: string): User {
     const user = {
       id: uuidv4(),
@@ -55,21 +60,27 @@ export class UserModel {
       upvote: 0
     };
 
+    
 
-    Object.keys(user)
-      .filter(key => key !== "id")
-      .forEach(key => {
-        this.redisClient.hset(user.id, key, user[key]);
-      });
+    // this.redisClient.set(user.id, JSON.stringify(user));
+    // this.redisClient.hset('users:index', user.id, user.username);
 
     return user;
   }
 
   getUser(userId: any) {
-    return this.redisClient.hgetall(userId);
+    const user = {
+      id: userId,
+      username: 'jean-michel',
+      downvote: 0,
+      upvote: 0
+    };
+
+    return 
   }
 
   getAllUsers() {
-    this.redisClient.hscan();
+    this.redisClient.HGETALL('users:index');
+    return results;
   }
 }

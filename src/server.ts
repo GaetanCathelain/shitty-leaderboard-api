@@ -1,32 +1,30 @@
-import express from "express";
-import redis from "redis";
-import cors from "cors";
+import { Redis } from "./db/redis"
 
-const app = express();
+const { GraphQLServer } = require('graphql-yoga')
+// 1
+const typeDefs = `
+type User {
+  id: ID
+  username: String
+  upvote: Int
+  downvote: Int
+}
 
-let redisClient = redis.createClient({
-  port: 65433, // replace with your port
-  host: "127.0.0.1" // replace with your hostanme or IP address
-  //    password  : '',    // replace with your password
-});
-
-app.use(cors());
-
-app.get("/", (req, res) => {
-  redisClient.set("lulz", "42", function(err) {
-    if (err) {
-      throw err; /* in production, handle errors more gracefully */
-    } else {
-      redisClient.get("lulz", function(err, value) {
-        if (err) {
-          throw err;
-        } else {
-          console.log("Value:", value);
-        }
-      });
-    }
-  });
-  res.send("Hello World!");
-});
-
-app.listen(65432, () => console.log("Example app listening on port 65432!"));
+type Query {
+  users: [User]
+  user: User
+}
+`
+// 2
+const resolvers = {
+  Query: {
+    users: () => new Redis().getAll(),
+    user: (id: string) => new Redis().getOne(id)
+  }
+}
+// 3
+const server = new GraphQLServer({
+  typeDefs,
+  resolvers,
+})
+server.start(() => console.log(`Server is running on http://localhost:4000`))
