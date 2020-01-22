@@ -1,9 +1,8 @@
 import { DatabaseService } from './databaseService';
 import { createHandyClient, IHandyRedis } from 'handy-redis';
-import uuid = require('uuid');
-import { User } from '../generated/graphql';
+import { Identifiable } from '../models/identifiable';
 
-export class Redis implements DatabaseService<User> {
+export class Redis implements DatabaseService<Identifiable> {
 
     private redisClient: IHandyRedis;
 
@@ -11,37 +10,39 @@ export class Redis implements DatabaseService<User> {
         this.redisClient = createHandyClient(65433);
     }
 
-    public getOne(id: string): User {
-        const identifiable: User = {
+    public getOne(id: string): Identifiable {
+        const identifiable: Identifiable = {
             id,
         };
         return identifiable;
     }
 
-    public getMany(ids: string[]): User[] {
+    public getMany(ids: string[]): Identifiable[] {
         return ids.map((id) => {
             return { id };
         });
     }
 
-    public getAll(): User[] {
-        const result = this.redisClient.hgetall('users');
-        return this.getMany(['1', '2', '3', '4']);
+    public async getAll(): Promise<Identifiable[]> {
+        const result: any = await this.redisClient.hgetall('users');
+        const res: Identifiable[] = Object.keys(result).map((key) => JSON.parse(result[key]));
+        return res;
     }
 
-    public async insertOne(element: User): Promise<User> {
-        const id = uuid.v4();
-        element.id = id;
-        const success = this.redisClient.hset('users', id, JSON.stringify(element));
+    public async insertOne(element: Identifiable): Promise<Identifiable> {
+        const success = this.redisClient.hset('users', element.id, JSON.stringify(element));
         if (!success) {
             throw new Error('Not inserted');
         }
-        const res = await this.redisClient.hget('users', id);
-        const insertedUser = JSON.parse(res);
-        return insertedUser;
+        const res = await this.redisClient.hget('users', element.id);
+        if (!res) {
+            throw new Error('Not inserted');
+        }
+        const insertedIdentifiable: Identifiable = JSON.parse(res);
+        return insertedIdentifiable;
     }
 
-    public insertMany(elements: User[]): User[] {
+    public insertMany(elements: Identifiable[]): Identifiable[] {
         return elements;
     }
 }

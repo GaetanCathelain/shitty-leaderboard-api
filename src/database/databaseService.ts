@@ -3,5 +3,5 @@ export interface DatabaseService<T> {
     insertMany(elements: T[]): T[];
     getOne(id: string): T;
     getMany(ids: string[]): T[];
-    getAll(): T[];
+    getAll(): Promise<T[]>;
 }

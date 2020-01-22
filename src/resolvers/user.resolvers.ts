@@ -1,5 +1,6 @@
 import { Redis } from "../database/redisService";
-import { User } from "../generated/graphql";
+import uuid = require("uuid");
+import { User } from "../models/identifiable";
 
 export default {
   Query: {
@@ -8,8 +9,10 @@ export default {
   },
   Mutation: {
     post: (parent: any, args: any) => {
-      const res = new Redis().insertOne({ username: args.user });
+      const id = uuid.v4();
+      const username: string = args.username;
+      const res = new Redis().insertOne({ id, username } as User);
       return res;
-    },
-  },
+    }
+  }
 };
